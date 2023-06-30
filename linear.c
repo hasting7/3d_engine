@@ -108,6 +108,13 @@ struct matrix_struct *offset(const struct matrix_struct target, const struct mat
 	return new;
 }
 
+void free_matrix(struct matrix_struct **matrix) {
+	Matrix *temp = *matrix;
+	free(temp->content);
+	free(temp);
+	*matrix = NULL;
+}
+
 #ifdef TEST
 int main() {
 	float a[4] = { 1, 2, 3, 4};

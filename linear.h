@@ -17,6 +17,7 @@ void transform(struct matrix_struct *, struct matrix_struct *);
 struct matrix_struct *offset(const struct matrix_struct, const struct matrix_struct);
 void inc_entry(struct matrix_struct *, int, int, float);
 struct matrix_struct *add_matricies(const struct matrix_struct, const struct matrix_struct);
+void free_matrix(struct matrix_struct **);
 
 
 

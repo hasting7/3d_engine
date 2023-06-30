@@ -7,6 +7,48 @@
 #include "linear.h"
 
 
+struct matrix_struct *rotational_transformation(const struct camera_struct camera) {
+	float x_matrix[9] = {
+		1,	0,								  0,
+		0,	cos(camera.rotation->content[0]), sin(camera.rotation->content[0]),
+		0, -sin(camera.rotation->content[0]), cos(camera.rotation->content[0]),
+	};
+	float y_matrix[9] = {
+		cos(camera.rotation->content[1]), 0, -sin(camera.rotation->content[1]),
+		0,								  1,  0,
+		sin(camera.rotation->content[1]), 0,  cos(camera.rotation->content[1])
+	};
+	float z_matrix[9] = {
+		cos(camera.rotation->content[2]), sin(camera.rotation->content[2]), 0,
+	   -sin(camera.rotation->content[2]), cos(camera.rotation->content[2]), 0,
+	   0,								  0,								1
+	};
+	Matrix *x_rotation = create_matrix(3, 3, x_matrix);
+	Matrix *y_rotation = create_matrix(3, 3, y_matrix);
+	Matrix *z_rotation = create_matrix(3, 3, z_matrix);
+
+	Matrix *p1 = multiply_matrices(x_rotation, y_rotation);
+	Matrix *p2 = multiply_matrices(p1, z_rotation);
+
+	free_matrix(&x_rotation);
+	free_matrix(&y_rotation);
+	free_matrix(&z_rotation);
+	free_matrix(&p1);
+
+	return p2;
+}
+
+struct camera_struct *create_camera(float *position) {
+	float zero[3] = { 0, 0, 0};
+	Camera *new = malloc(sizeof(Camera));
+
+	new->position = create_matrix(3, 1, (position) ? position : zero);
+	new->rotation = create_matrix(3 ,1, zero);
+
+	return new;
+}
+
+
 int main(int argc, char *argv[]) {
 
     	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
