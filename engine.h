@@ -5,6 +5,10 @@
 
 struct matrix_struct;
 
+struct list_element {
+	void *data;
+	struct list_element *next;
+};
 
 typedef struct camera_struct {
 	struct matrix_struct *position;
@@ -12,7 +16,9 @@ typedef struct camera_struct {
 } Camera;
 
 typedef struct shape_struct {
-
+	void (*render)(struct shape_struct *);
+	struct matrix_struct *points;
+	SDL_Color color;
 } Shape;
 
 
@@ -23,6 +29,8 @@ void events(SDL_Event);
 
 struct matrix_struct *rotational_transformation(const struct camera_struct);
 struct camera_struct *create_camera(float *);
+struct shape_struct *create_shape(int);
+void free_shape(struct shape_struct **);
 
 extern char *NAME;
 extern int WIDTH;

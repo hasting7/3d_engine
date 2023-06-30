@@ -6,6 +6,10 @@
 #include "engine.h"
 #include "linear.h"
 
+SDL_Color white = { .r = 255, .g = 255, .b = 255};
+
+struct list_element *Shapes;
+
 
 struct matrix_struct *rotational_transformation(const struct camera_struct camera) {
 	float x_matrix[9] = {
@@ -48,6 +52,26 @@ struct camera_struct *create_camera(float *position) {
 	return new;
 }
 
+struct shape_struct *create_shape(int points) {
+	struct list_element *container = malloc(sizeof(struct list_element));
+	Shape *new = malloc(sizeof(Shape));
+	new->points = create_matrix(3, points, NULL);
+	new->color = white;
+
+	container->data = (void *) new;
+	container->next = Shapes;
+	Shapes = container;
+
+	return new;
+}
+
+void free_shape(struct shape_struct **shape) { // MAYBE SEARCH THROUGH SHAPES THEN DELETE THE LIST_ELEMENT
+	Shape *temp = *shape;
+	free_matrix(&temp->points);
+	free(temp);
+	*shape = NULL;
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -81,6 +105,16 @@ int main(int argc, char *argv[]) {
 		// stuff to do
 		
 		SDL_RenderClear(render);
+
+		struct list_element *walk = Shapes;
+		while (walk) {
+			Shape *current = (Shape *) walk->data;
+			if (!current) continue;										// REMOVE IDK MAN
+
+			current->render(current);
+
+			walk = walk->next;
+		}
 
 		draw(render);
 
