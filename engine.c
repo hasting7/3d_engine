@@ -52,7 +52,7 @@ struct matrix_struct *rotational_transformation(struct matrix_struct rotation) {
 
 struct camera_struct *create_camera(float *position) {
 	float zero[3] = { 0, 0, 0};
-	float pos[3] = {0, 0, 500};
+	float pos[3] = {-100, -500, 500};
 	Camera *new = malloc(sizeof(Camera));
 
 	new->position = create_matrix(3, 1, (position) ? position : pos);
