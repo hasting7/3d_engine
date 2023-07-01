@@ -8,6 +8,8 @@
 
 SDL_Color white = { .r = 255, .g = 255, .b = 255};
 
+Camera *main_camera;
+
 struct list_element *Shapes;
 
 
@@ -31,8 +33,8 @@ struct matrix_struct *rotational_transformation(const struct camera_struct camer
 	Matrix *y_rotation = create_matrix(3, 3, y_matrix);
 	Matrix *z_rotation = create_matrix(3, 3, z_matrix);
 
-	Matrix *p1 = multiply_matrices(x_rotation, y_rotation);
-	Matrix *p2 = multiply_matrices(p1, z_rotation);
+	Matrix *p1 = multiply_matrices(*x_rotation, *y_rotation);
+	Matrix *p2 = multiply_matrices(*p1, *z_rotation);
 
 	free_matrix(&x_rotation);
 	free_matrix(&y_rotation);
@@ -44,19 +46,22 @@ struct matrix_struct *rotational_transformation(const struct camera_struct camer
 
 struct camera_struct *create_camera(float *position) {
 	float zero[3] = { 0, 0, 0};
+	float pos[3] = {-300, -300,-500};
 	Camera *new = malloc(sizeof(Camera));
 
-	new->position = create_matrix(3, 1, (position) ? position : zero);
+	new->position = create_matrix(3, 1, (position) ? position : pos);
 	new->rotation = create_matrix(3 ,1, zero);
 
 	return new;
 }
 
-struct shape_struct *create_shape(int points) {
+struct shape_struct *create_shape(int points, float *point_data) {
 	struct list_element *container = malloc(sizeof(struct list_element));
 	Shape *new = malloc(sizeof(Shape));
-	new->points = create_matrix(3, points, NULL);
+	new->points = create_matrix(3, points, point_data);
+	new->render = &render_shape;
 	new->color = white;
+	new->n_edges = 0;
 
 	container->data = (void *) new;
 	container->next = Shapes;
@@ -72,8 +77,117 @@ void free_shape(struct shape_struct **shape) { // MAYBE SEARCH THROUGH SHAPES TH
 	*shape = NULL;
 }
 
+SDL_Point *project_shape(struct shape_struct shape, struct camera_struct camera) {
+	// e represents location of 2d display surface relative to camera location
+	// for now imma just have it {0, 0, 100} so its in front off 
+	float e_pos[3] = {0, 0, 100}; // MAYBE CHANGE THIS TO -100
+
+	float e_data[9] = {
+		1, 0, e_pos[0] / e_pos[2],
+		0, 1, e_pos[1] / e_pos[2],
+		0, 0, 1 / e_pos[2]
+	};
+
+	// where result is saved
+	SDL_Point *result = calloc(shape.points->n, sizeof(SDL_Point));
+
+	// shift shape matrix with cameras offset, and get the rotational data
+	Matrix *shape_camera_offset = offset(*shape.points, *camera.position);
+	Matrix *camera_rotation = rotational_transformation(camera);
+
+	// transform the matrices
+	Matrix *d = multiply_matrices(*camera_rotation, *shape_camera_offset);
+
+	
+	Matrix *e_homo = create_matrix(3, 3, e_data);
+
+	Matrix *f = multiply_matrices(*e_homo, *d);
+
+	for (int i = 0; i < f->n; i++) {
+		float scale = *target_entry(*f, 2, i);
+		result[i].x = *target_entry(*f, 0 ,i) / scale;
+		result[i].y = *target_entry(*f, 1 ,i) / scale;
+	}
+
+	free_matrix(&shape_camera_offset);
+	free_matrix(&camera_rotation);
+	free_matrix(&e_homo);
+	free_matrix(&f);
+	return result;
+}
+
+void render_shape(SDL_Renderer *render, struct shape_struct *shape, struct camera_struct camera) {
+	SDL_Point *points = project_shape(*shape, camera);
+
+
+	printf("begining shape\n");
+	for (int i = 0; i < shape->points->n; i++) {
+		printf("POINT %d: (x = %d, y = %d)\n", i, points[i].x, points[i].y);
+		SDL_RenderDrawPoint(render, points[i].x, points[i].y);
+	}
+
+	struct list_element *walk = shape->edges;
+
+	while (walk) {
+		Edge *edge = (Edge *) walk->data;
+
+		SDL_RenderDrawLine(render, points[edge->indices[0]].x, points[edge->indices[0]].y, points[edge->indices[1]].x, points[edge->indices[1]].y);
+
+		walk = walk->next;
+	}
+
+	free(points);
+}
+
+struct shape_struct *populate_shape(char *filename) {
+	FILE *fp = fopen(filename, "r");
+	int r, g, b, points, edges;
+	float xyz[3] = { 0 };
+
+	fscanf(fp,"(%d,%d,%d) %d %d\n", &r, &g, &b, &points, &edges);
+	SDL_Color color = {.r = r, .g = g, .b = b};
+
+	Shape *new = create_shape(points, NULL);
+	new->color = color;
+
+	for (int i = 0; i < points; i++) {
+		fscanf(fp, "%f %f %f\n", &xyz[0], &xyz[1], &xyz[2]);
+		for (int j = 0; j < 3; j++) {
+			set_entry(new->points, j, i, xyz[j]);
+		}
+	}
+
+	int indices[2] = { 0 };
+	for (int i = 0; i < edges; i++) {
+		fscanf(fp, "%d %d\n", &indices[0], &indices[1]);
+
+		struct list_element *container = malloc(sizeof(struct list_element));
+		Edge *edge = malloc(sizeof(Edge));
+		memcpy(edge->indices, indices, sizeof(int) * 2);
+
+		container->next = new->edges;
+		new->edges = container;
+		container->data = (void *) edge;
+	}
+
+	printf("loaded shape\n");
+	display_matrix(new->points);
+
+	fclose(fp);
+	return new;
+}
+
 
 int main(int argc, char *argv[]) {
+
+		main_camera = create_camera(NULL);
+
+
+		populate_shape("./axis/x-axis");
+		populate_shape("./axis/y-axis");
+		populate_shape("./axis/z-axis");
+
+
 
     	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         	printf("Could not init SDL: %s\n", SDL_GetError());
@@ -111,7 +225,8 @@ int main(int argc, char *argv[]) {
 			Shape *current = (Shape *) walk->data;
 			if (!current) continue;										// REMOVE IDK MAN
 
-			current->render(current);
+			SDL_SetRenderDrawColor(render, current->color.r, current->color.g, current->color.b, 255);
+			current->render(render, current, *main_camera);
 
 			walk = walk->next;
 		}
