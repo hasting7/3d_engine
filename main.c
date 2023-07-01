@@ -21,7 +21,9 @@ void draw(SDL_Renderer *render) {
 
 
 
-	rotate_shape(X, *rotation);	
+	rotate_shape(X, *rotation);
+	rotate_shape(Y, *rotation);	
+	rotate_shape(Z, *rotation);	
 
 }
 
