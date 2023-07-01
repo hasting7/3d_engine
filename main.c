@@ -9,10 +9,20 @@ int HEIGHT = 600;
 char *NAME = "Shapes";
 SDL_Color bg;
 
+Matrix *rotation;
+
 void init() {
+
+	rotation = create_matrix(3, 1, zero);
+	set_entry(rotation, 1, 0, 0.01);
 }
 
 void draw(SDL_Renderer *render) {
+
+
+
+	rotate_shape(X, *rotation);	
+
 }
 
 void key_press(char key) {

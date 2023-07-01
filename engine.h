@@ -33,16 +33,22 @@ void draw(SDL_Renderer *);
 void key_press(char);
 void events(SDL_Event);
 
-struct matrix_struct *rotational_transformation(const struct camera_struct);
+struct matrix_struct *rotational_transformation(struct matrix_struct);
 struct camera_struct *create_camera(float *);
 struct shape_struct *create_shape(int, float *);
 void free_shape(struct shape_struct **);
 SDL_Point *project_shape(struct shape_struct, struct camera_struct); 
 void render_shape(SDL_Renderer *, struct shape_struct *, struct camera_struct);
+void rotate_shape(struct shape_struct *, struct matrix_struct);
 
 extern char *NAME;
 extern int WIDTH;
 extern int HEIGHT;
 extern SDL_Color bg;
+extern Camera *main_camera;
+extern Shape *X;
+extern Shape *Y;
+extern Shape *Z;
+extern float zero[3];
 
 #endif

@@ -7,28 +7,34 @@
 #include "linear.h"
 
 SDL_Color white = { .r = 255, .g = 255, .b = 255};
+float zero[3] = { 0, 0, 0};
 
 Camera *main_camera;
+Shape *X;
+Shape *Y;
+Shape *Z;
 
 struct list_element *Shapes;
 
+struct matrix_struct *rotational_transformation(struct matrix_struct rotation) {
+	assert(rotation.n == 1);
 
-struct matrix_struct *rotational_transformation(const struct camera_struct camera) {
 	float x_matrix[9] = {
-		1,	0,								  0,
-		0,	cos(camera.rotation->content[0]), sin(camera.rotation->content[0]),
-		0, -sin(camera.rotation->content[0]), cos(camera.rotation->content[0]),
+		1,	0,						  0,
+		0,	cos(rotation.content[0]), sin(rotation.content[0]),
+		0, -sin(rotation.content[0]), cos(rotation.content[0]),
 	};
 	float y_matrix[9] = {
-		cos(camera.rotation->content[1]), 0, -sin(camera.rotation->content[1]),
-		0,								  1,  0,
-		sin(camera.rotation->content[1]), 0,  cos(camera.rotation->content[1])
+		cos(rotation.content[1]), 0, -sin(rotation.content[1]),
+		0,						  1,  0,
+		sin(rotation.content[1]), 0,  cos(rotation.content[1])
 	};
 	float z_matrix[9] = {
-		cos(camera.rotation->content[2]), sin(camera.rotation->content[2]), 0,
-	   -sin(camera.rotation->content[2]), cos(camera.rotation->content[2]), 0,
-	   0,								  0,								1
+		cos(rotation.content[2]), sin(rotation.content[2]), 0,
+	   -sin(rotation.content[2]), cos(rotation.content[2]), 0,
+	    0,						  0,				        1
 	};
+
 	Matrix *x_rotation = create_matrix(3, 3, x_matrix);
 	Matrix *y_rotation = create_matrix(3, 3, y_matrix);
 	Matrix *z_rotation = create_matrix(3, 3, z_matrix);
@@ -46,13 +52,24 @@ struct matrix_struct *rotational_transformation(const struct camera_struct camer
 
 struct camera_struct *create_camera(float *position) {
 	float zero[3] = { 0, 0, 0};
-	float pos[3] = {-300, -300,-500};
+	float pos[3] = {0, 0, 500};
 	Camera *new = malloc(sizeof(Camera));
 
 	new->position = create_matrix(3, 1, (position) ? position : pos);
 	new->rotation = create_matrix(3 ,1, zero);
 
 	return new;
+}
+
+void rotate_shape(struct shape_struct *shape, struct matrix_struct rotation) {
+	Matrix *rotational_matrix = rotational_transformation(rotation);
+
+	Matrix *product = multiply_matrices(*rotational_matrix, *shape->points);
+
+	free_matrix(&shape->points);
+
+	shape->points = product;
+
 }
 
 struct shape_struct *create_shape(int points, float *point_data) {
@@ -80,7 +97,7 @@ void free_shape(struct shape_struct **shape) { // MAYBE SEARCH THROUGH SHAPES TH
 SDL_Point *project_shape(struct shape_struct shape, struct camera_struct camera) {
 	// e represents location of 2d display surface relative to camera location
 	// for now imma just have it {0, 0, 100} so its in front off 
-	float e_pos[3] = {0, 0, 100}; // MAYBE CHANGE THIS TO -100
+	float e_pos[3] = {0, 0, -100}; // MAYBE CHANGE THIS TO -100
 
 	float e_data[9] = {
 		1, 0, e_pos[0] / e_pos[2],
@@ -93,7 +110,7 @@ SDL_Point *project_shape(struct shape_struct shape, struct camera_struct camera)
 
 	// shift shape matrix with cameras offset, and get the rotational data
 	Matrix *shape_camera_offset = offset(*shape.points, *camera.position);
-	Matrix *camera_rotation = rotational_transformation(camera);
+	Matrix *camera_rotation = rotational_transformation(*camera.rotation);
 
 	// transform the matrices
 	Matrix *d = multiply_matrices(*camera_rotation, *shape_camera_offset);
@@ -105,8 +122,8 @@ SDL_Point *project_shape(struct shape_struct shape, struct camera_struct camera)
 
 	for (int i = 0; i < f->n; i++) {
 		float scale = *target_entry(*f, 2, i);
-		result[i].x = *target_entry(*f, 0 ,i) / scale;
-		result[i].y = *target_entry(*f, 1 ,i) / scale;
+		result[i].x = *target_entry(*f, 0 ,i) / scale + (WIDTH / 2);
+		result[i].y = *target_entry(*f, 1 ,i) / scale + (HEIGHT / 2);
 	}
 
 	free_matrix(&shape_camera_offset);
@@ -131,7 +148,11 @@ void render_shape(SDL_Renderer *render, struct shape_struct *shape, struct camer
 	while (walk) {
 		Edge *edge = (Edge *) walk->data;
 
-		SDL_RenderDrawLine(render, points[edge->indices[0]].x, points[edge->indices[0]].y, points[edge->indices[1]].x, points[edge->indices[1]].y);
+		SDL_RenderDrawLine(render, 
+				points[edge->indices[0]].x, 
+				points[edge->indices[0]].y, 
+				points[edge->indices[1]].x, 
+				points[edge->indices[1]].y);
 
 		walk = walk->next;
 	}
@@ -183,9 +204,9 @@ int main(int argc, char *argv[]) {
 		main_camera = create_camera(NULL);
 
 
-		populate_shape("./axis/x-axis");
-		populate_shape("./axis/y-axis");
-		populate_shape("./axis/z-axis");
+		X = populate_shape("./axis/x-axis");
+		Y = populate_shape("./axis/y-axis");
+		Z = populate_shape("./axis/z-axis");
 
 
 
