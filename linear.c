@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 #include "linear.h"
 
@@ -67,6 +68,15 @@ struct matrix_struct *multiply_matrices(struct matrix_struct m1, struct matrix_s
 		}
 	}
 	return product;
+}
+
+float mag(struct matrix_struct matrix, int n) {
+	float sum = 0;
+
+	for (int i = 0; i < matrix.m; i++) {
+		sum += pow(*target_entry(matrix, i, n), 2);
+	}
+	return sqrt(sum);
 }
 
 struct matrix_struct *add_matricies(const struct matrix_struct m1, const struct matrix_struct m2) {

@@ -12,36 +12,34 @@ SDL_Color bg;
 Matrix *rotation;
 Shape *plane;
 Shape *cube;
+Shape *cube2;
 
 float plane_trans[9] = {
-	10, 0, 0,
-	0. , 0.2, 0,
-	0, 0, 10
+	2, 0, 0,
+	0. , 0.1, 0,
+	0, 0, 16
 };
 
 void init() {
-	Matrix *scale = create_matrix(3, 3, plane_trans);
-	cube = populate_shape("./shapes/cube");
+	cube = populate_shape("./shapes/cube", 0, 0, 0);
+	cube2 = populate_shape("./shapes/cube", 0, -10, 0);
+	cube2->color = orange;
 
-	transform_shape(cube, *scale);
+	scale(cube, 10, 0.5, 10);
+	scale(cube2, 2, 2, 2);
 
 	rotation = create_matrix(3,1, zero);
 
 	set_entry(rotation, 0, 0, 0.01);
-	// set_entry(rotation, 0, 0, 0.07);
+	set_entry(main_camera->position, 1, 0, -100);
 
-	// free_matrix(&rotation);
 }
 
 void draw(SDL_Renderer *render) {
 
-	inc_entry(main_camera->rotation, 1, 0, 0.01);
+	inc_entry(main_camera->rotation, 0, 0, 0.01);
 
-	display_matrix(main_camera->rotation);
-	// rotate_shape(cube, *rotation);
-	// rotate_shape(X, *rotation);
-	// rotate_shape(Y, *rotation);
-	// rotate_shape(Z, *rotation);
+	rotate_shape(cube2, *rotation);
 
 }
 
