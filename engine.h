@@ -37,7 +37,7 @@ void events(SDL_Event);
 
 struct matrix_struct *rotational_transformation(struct matrix_struct);
 void transform_shape(struct shape_struct *, struct matrix_struct); 
-struct camera_struct *create_camera(float *, void ()(struct camera_struct *));
+struct camera_struct *create_camera(float *, void (*)(struct camera_struct *));
 struct shape_struct *create_shape(int, float *);
 void free_shape(struct shape_struct **);
 SDL_Point *project_shape(struct shape_struct, struct camera_struct); 

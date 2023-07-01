@@ -63,7 +63,7 @@ struct matrix_struct *rotational_transformation(struct matrix_struct rotation) {
 	return p2;
 }
 
-struct camera_struct *create_camera(float *position, void *(update)(struct camera_struct *)) {
+struct camera_struct *create_camera(float *position, void *(update_func)(struct camera_struct *)) {
 	float zero[3] = { 0, 0, 0};
 	float pos[3] = {0, -30, 500};
 	float dir[3] = {0, 0, -100}; // change to 1;
@@ -72,7 +72,7 @@ struct camera_struct *create_camera(float *position, void *(update)(struct camer
 	new->position = create_matrix(3, 1, (position) ? position : pos);
 	new->rotation = create_matrix(3 ,1, zero);
 	new->direction = create_matrix(3, 1, dir);
-	new->update = update;
+	new->update = update_func;
 
 	return new;
 }
