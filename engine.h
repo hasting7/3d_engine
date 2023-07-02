@@ -5,48 +5,65 @@
 
 struct matrix_struct;
 
-typedef struct camera_struct {
-	float rotation[3];
-	struct matrix_struct *position;
-} Camera;
-
-struct renderable_object {
-	struct shape_struct *object;
-	struct renderable_object *next;
-	struct camera_struct *camera;
+struct list_element {
+	void *data;
+	struct list_element *next;
 };
 
 typedef struct edge_struct {
-	struct edge_struct *next;
-	int nodes[2];
+	int indices[2];
 } Edge;
 
+typedef struct projection_data {
+	SDL_Point *points;
+	int out_of_frame;
+} Projection;
+
+typedef struct camera_struct {
+	void (*update)(struct camera_struct *);
+	struct matrix_struct *position;
+	struct matrix_struct *rotation;
+} Camera;
+
 typedef struct shape_struct {
-	void (*update)(struct shape_struct *);
-	void (*render)(SDL_Renderer *, struct shape_struct *, struct camera_struct *);
+	void (*render)(SDL_Renderer *, struct shape_struct *, struct camera_struct);
 	struct matrix_struct *points;
-	struct edge_struct *edges;
-	struct matrix_struct *center;
-	int n_points;
-	int n_edges;
+	struct list_element *edges;
 	SDL_Color color;
-	char *name;
+	int n_edges;
 } Shape;
+
 
 void init();
 void draw(SDL_Renderer *);
 void key_press(char);
 void events(SDL_Event);
-void render_shape(SDL_Renderer *, struct shape_struct *, struct camera_struct *);
-SDL_Point *project_shape(struct shape_struct, struct camera_struct *); 
-struct shape_struct *generate_object(char *, void (*)(struct shape_struct *), struct camera_struct *);
-struct shape_struct *create_shape(int, void (*)(struct shape_struct *), struct camera_struct *);
-void add_edge(struct shape_struct *, int *);
-struct camera_struct *create_camera(float *);
+
+struct matrix_struct *rotational_transformation(struct matrix_struct);
+void transform_shape(struct shape_struct *, struct matrix_struct); 
+struct camera_struct *create_camera(float *, void (*)(struct camera_struct *));
+struct shape_struct *create_shape(int, float *);
+void free_shape(struct shape_struct **);
+struct projection_data *project_shape(struct shape_struct, struct camera_struct); 
+void render_shape(SDL_Renderer *, struct shape_struct *, struct camera_struct);
+void rotate_shape(struct shape_struct *, struct matrix_struct);
+struct shape_struct *populate_shape(char *, float, float, float);
+void rotate_shape(struct shape_struct *, struct matrix_struct);
+void free_projection_data(struct projection_data **);
+void scale(struct shape_struct *, float, float, float);
+
 extern char *NAME;
 extern int WIDTH;
 extern int HEIGHT;
-extern SDL_Point origin;
 extern SDL_Color bg;
+extern Camera *main_camera;
+extern Shape *X;
+extern Shape *Y;
+extern Shape *Z;
+extern float zero[3];
+extern struct matrix_struct *invert;
+
+
+extern SDL_Color orange;
 
 #endif
