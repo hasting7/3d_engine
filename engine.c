@@ -139,7 +139,7 @@ struct projection_data *project_shape(struct shape_struct shape, struct camera_s
 	int exclude = 0;
 	int mask;
 	float dot_product;
-	float range = M_PI / 4;
+	float range = M_PI / 2.5;
 	float calculation;
 
 	Matrix *from_cam = offset(*shape.points, *camera.position);
@@ -285,6 +285,7 @@ int main(int argc, char *argv[]) {
 		X = populate_shape("./axis/x-axis", 0, 0, 0);
 		Y = populate_shape("./axis/y-axis", 0, 0, 0);
 		Z = populate_shape("./axis/z-axis", 0, 0, 0);
+		populate_shape("./axis/north",1000,0,0);
 
 
 
